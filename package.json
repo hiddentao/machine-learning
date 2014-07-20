@@ -1,7 +1,7 @@
 {
   "name": "machine-learning",
   "version": "1.0.0",
-  "description": "Efficient, high-performance machine learning algorithms",
+  "description": "Efficient, high-performance machine learning algorithms for node.js and browsers",
   "main": "index.js",
   "scripts": {
     "test": "gulp",

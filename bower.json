@@ -5,7 +5,7 @@
   "authors": [
     "Ramesh Nair <ram@hiddentao.com>"
   ],
-  "description": "Efficient, high-performance machine learning algorithms",
+  "description": "Efficient, high-performance machine learning algorithms for node.js and browsers",
   "moduleType": [
     "amd",
     "globals",
