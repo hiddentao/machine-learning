@@ -1,0 +1,51 @@
+{
+  "name": "machine-learning",
+  "version": "1.0.0",
+  "description": "Efficient, high-performance machine learning algorithms",
+  "main": "index.js",
+  "scripts": {
+    "test": "gulp",
+    "build": "gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiddentao/machine-learning.git"
+  },
+  "keywords": [
+    "linear",
+    "algebra",
+    "math",
+    "precision",
+    "float",
+    "numerical",
+    "analysis",
+    "regression",
+    "machine",
+    "learning",
+    "ai",
+    "intelligence",
+    "neural",
+    "networks"
+  ],
+  "author": "Ramesh Nair <ram@hiddentao.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hiddentao/machine-learning/issues"
+  },
+  "homepage": "https://github.com/hiddentao/machine-learning",
+  "devDependencies": {
+    "gulp-uglify": "~0.3.0",
+    "gulp-expect-file": "0.0.7",
+    "gulp-mocha": "~0.4.1",
+    "gulp-jshint": "~1.6.3",
+    "gulp": "~3.8.1",
+    "gulp-concat": "~2.2.0",
+    "run-sequence": "~0.3.6",
+    "chai": "~1.9.1",
+    "sinon": "~1.10.2",
+    "sinon-chai": "~2.5.0"
+  },
+  "dependencies": {
+    "linear-algebra": "~2.3.0"
+  }
+}

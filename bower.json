@@ -1,0 +1,43 @@
+{
+  "name": "machine-learning",
+  "main": "dist/machine-learning.js",
+  "version": "1.0.0",
+  "authors": [
+    "Ramesh Nair <ram@hiddentao.com>"
+  ],
+  "description": "Efficient, high-performance machine learning algorithms",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "linear",
+    "algebra",
+    "math",
+    "precision",
+    "float",
+    "numerical",
+    "analysis",
+    "regression",
+    "machine",
+    "learning",
+    "ai",
+    "intelligence",
+    "neural",
+    "networks"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/hiddentao/linear-algebra",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "src",
+    "test",
+    "gulpfile.js"
+  ],
+  "dependencies": {
+    "linear-algebra": "~2.3.0"
+  }
+}
