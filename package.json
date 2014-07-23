@@ -46,6 +46,6 @@
     "sinon-chai": "~2.5.0"
   },
   "dependencies": {
-    "linear-algebra": "~2.3.0"
+    "linear-algebra": "~3.0.0"
   }
 }

@@ -7,49 +7,45 @@
  */
 ML.normalizeFeatures = function(X) {
   var numFeatures = X.cols,
-    m = X.cols;
+    m = X.rows;
 
-  // calculate mean and std
+  // for each value in each column, subtract column mean from it 
+  // and divide by result by column std (standard deviation)
+
+  var newArray = new Array(m);
   
-  var mean = new Array(numFeatures),
-    std = new Array(numFeatures),
-    i, j, tmp;
-
-  var tmpSum = new ML.Vector.zero(m);
+  var mean, std, i, j, tmpSum = new ML.Vector.zero(m);
 
   for (j=0; j<=numFeatures; ++j) {
     // calculate mean
     for (i=0; i<m; ++i) {
-      tmpSum[i] = X.data[i][j];
+      tmpSum.data[0][i] = X.data[i][j];
+
+      // pre-allocate final array with space for x0 column
+      if (!Array.isArray(newArray[i])) {
+        newArray[i] = new Array(numFeatures + 1);
+        newArray[i][0] = 1; // x0 column
+      }
     }
-    mean[j] = tmpSum.sum() / m;
+    mean = tmpSum.getSum() / m;
 
     // calculate std
-    for (i=0; i<m; ++i) {
-      tmp = X.data[i][j] - mean[i];
-      tmpSum[i] = tmp * tmp;
+    for (i=1; i<=m; ++i) {
+      // subtract each column value from the mean
+      newArray[i][j] = X.data[i-1][j] - mean;
+      // and calculate std at the same time
+      tmpSum.data[0][i] = newArray[i][j] * newArray[i][j];
     }
-    std[j] = Math.sqrt(tmpSum.total() / m);
-    std[j] += _SMALLEST_DELTA; // to prevent divide by zero below
-  }
+    std = Math.sqrt(tmpSum.getSum() / m);
+    std += _SMALLEST_DELTA; // to prevent divide by zero below
 
-  // subtract all columns from their means
-  var meanNormalized = X.plusCols(mean);
-
-  // divide all columns by their standard deviations and attach x0 column
-  var result = new Array(m);
-
-  // apply mean and standard deviation to all values
-  for (i=0; i<m; ++i) {
-    // add 1 to store x0 values
-    result[i] = new Array(numFeatures + 1);
-    result[i][0] = 1; // x0
-
-    for (j=1; j<=numFeatures; ++j) {
-      result[i][j] = meanNormalized[i][j] / std(j);
+    // divide column by std
+    for (i=1; i<=m; ++i) {
+      // subtract each column value from the mean
+      newArray[i][j] /= std;
     }
   }
 
-  return new ML.Matrix(result);
+  return new ML.Matrix(newArray);
 };
 

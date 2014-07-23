@@ -48,7 +48,7 @@ ML.LinearReg.prototype.addData = function(data) {
  */
 ML.LinearReg.prototype.solve = function(alpha, maxIters) {
   var X = new ML.Matrix(this._dataX),
-    y = new ML.Vector(this._dataY);
+    y = new ML.Matrix(this._dataY).trans_();
 
   return ML.gradientDescent(X, y, ML.LinearReg.costFunction);
 };
@@ -68,9 +68,11 @@ ML.LinearReg.costFunction = function(X, theta, y) {
    
     Cost = 1/2m * trans(XT*theta - y) * (XT*theta - y), where XT=trans(X)
   */
-  var X_mul_theta_minus_y = X.mul(theta).minusP(y);
+  var m = y.cols;
 
-  return (X_mul_theta_minus_y.dot(X_mul_theta_minus_y)) / (2 * y.size);
+  var X_mul_theta_minus_y = X.dot(theta).minus_(y);
+
+  return (X_mul_theta_minus_y.trans().dot_(X_mul_theta_minus_y)).data[0][0] / (2 * m);
 };
 
 

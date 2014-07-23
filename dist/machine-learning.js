@@ -49,50 +49,46 @@
  */
 ML.normalizeFeatures = function(X) {
   var numFeatures = X.cols,
-    m = X.cols;
+    m = X.rows;
 
-  // calculate mean and std
+  // for each value in each column, subtract column mean from it 
+  // and divide by result by column std (standard deviation)
+
+  var newArray = new Array(m);
   
-  var mean = new Array(numFeatures),
-    std = new Array(numFeatures),
-    i, j, tmp;
-
-  var tmpSum = new ML.Vector.zero(m);
+  var mean, std, i, j, tmpSum = new ML.Vector.zero(m);
 
   for (j=0; j<=numFeatures; ++j) {
     // calculate mean
     for (i=0; i<m; ++i) {
-      tmpSum[i] = X.data[i][j];
+      tmpSum.data[0][i] = X.data[i][j];
+
+      // pre-allocate final array with space for x0 column
+      if (!Array.isArray(newArray[i])) {
+        newArray[i] = new Array(numFeatures + 1);
+        newArray[i][0] = 1; // x0 column
+      }
     }
-    mean[j] = tmpSum.sum() / m;
+    mean = tmpSum.getSum() / m;
 
     // calculate std
-    for (i=0; i<m; ++i) {
-      tmp = X.data[i][j] - mean[i];
-      tmpSum[i] = tmp * tmp;
+    for (i=1; i<=m; ++i) {
+      // subtract each column value from the mean
+      newArray[i][j] = X.data[i-1][j] - mean;
+      // and calculate std at the same time
+      tmpSum.data[0][i] = newArray[i][j] * newArray[i][j];
     }
-    std[j] = Math.sqrt(tmpSum.total() / m);
-    std[j] += _SMALLEST_DELTA; // to prevent divide by zero below
-  }
+    std = Math.sqrt(tmpSum.getSum() / m);
+    std += _SMALLEST_DELTA; // to prevent divide by zero below
 
-  // subtract all columns from their means
-  var meanNormalized = X.plusCols(mean);
-
-  // divide all columns by their standard deviations and attach x0 column
-  var result = new Array(m);
-
-  // apply mean and standard deviation to all values
-  for (i=0; i<m; ++i) {
-    // add 1 to store x0 values
-    result[i] = new Array(numFeatures + 1);
-    result[i][0] = 1; // x0
-
-    for (j=1; j<=numFeatures; ++j) {
-      result[i][j] = meanNormalized[i][j] / std(j);
+    // divide column by std
+    for (i=1; i<=m; ++i) {
+      // subtract each column value from the mean
+      newArray[i][j] /= std;
     }
   }
 
-  return new ML.Matrix(result);
+  return new ML.Matrix(newArray);
 };
 
 
@@ -131,11 +127,11 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
   var m = X.rows,
     n = X.cols;
 
-  var oldCost, i, j, row, tmp;
+  var oldCost, i, j, row, tmpSum = new ML.Vector.zero(m);
 
   // initial theta and theta delta
   var theta = ML.Vector.zero(n),
-      delta = new ML.Vector.zero(n);
+      delta = ML.Vector.zero(n);
 
   // initial cost
   var cost = costFn(X, theta, y);
@@ -148,18 +144,16 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
 
     // for each theta value
     for (j=0; j<n; ++j) {
-      tmp = 0;
-
       // to calculate derivate we go through each row in training set
       for (i=0; i<m; ++i) {
-        tmp += (X.dot(i, theta) - y[i]) * X.data[i][j];
+        tmpSum[i] = (X.dot(i, theta) - y[i]) * X.data[i][j];
       }
 
-      delta.data[j] = alpha * tmp / m;
+      delta.data[j] = alpha * tmpSum.getSum() / m;
     }
 
     // update theta
-    theta.minusP(delta);
+    theta.minus_(delta);
 
     // calculate new cost
     cost = costFn(X, theta, y);
@@ -167,7 +161,7 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
     // if cost increased
     if (cost > oldCost) {
       // restore theta
-      theta.plusP(delta);
+      theta.plus_(delta);
       // reduce alpha
       alpha /= 2;
     }
@@ -233,7 +227,7 @@ ML.LinearReg.prototype.addData = function(data) {
  */
 ML.LinearReg.prototype.solve = function(alpha, maxIters) {
   var X = new ML.Matrix(this._dataX),
-    y = new ML.Vector(this._dataY);
+    y = new ML.Matrix(this._dataY).trans_();
 
   return ML.gradientDescent(X, y, ML.LinearReg.costFunction);
 };
@@ -253,9 +247,11 @@ ML.LinearReg.costFunction = function(X, theta, y) {
    
     Cost = 1/2m * trans(XT*theta - y) * (XT*theta - y), where XT=trans(X)
   */
-  var X_mul_theta_minus_y = X.mul(theta).minusP(y);
+  var m = y.cols;
 
-  return (X_mul_theta_minus_y.dot(X_mul_theta_minus_y)) / (2 * y.size);
+  var X_mul_theta_minus_y = X.dot(theta).minus_(y);
+
+  return (X_mul_theta_minus_y.trans().dot_(X_mul_theta_minus_y)).data[0][0] / (2 * m);
 };
 
 
