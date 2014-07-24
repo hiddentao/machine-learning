@@ -20,6 +20,11 @@
   var _SMALLEST_DELTA = Number.EPSILON || 0.000000000001;
 
 
+  var _throwError = function(cat, op, msg) {
+    throw new Error('machine-learning: [' + cat + '_' + op + '] ' + msg);
+  };
+
+
   /**
    * Initialise the machine learning library.
    *

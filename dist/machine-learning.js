@@ -20,6 +20,11 @@
   var _SMALLEST_DELTA = Number.EPSILON || 0.000000000001;
 
 
+  var _throwError = function(cat, op, msg) {
+    throw new Error('machine-learning: [' + cat + '_' + op + '] ' + msg);
+  };
+
+
   /**
    * Initialise the machine learning library.
    *
@@ -56,40 +61,45 @@ ML.normalizeFeatures = function(X) {
 
   var newArray = new Array(m);
   
-  var mean, std, i, j, tmpSum = new ML.Vector.zero(m);
+  var mean, std, i, j, jNormalized, tmpSum = new ML.Vector.zero(m);
 
-  for (j=0; j<=numFeatures; ++j) {
+  for (j=0; j<numFeatures; ++j) {
+    jNormalized = j + 1;  // because we'll be prepending an x0 column later on
+
     // calculate mean
     for (i=0; i<m; ++i) {
       tmpSum.data[0][i] = X.data[i][j];
 
       // pre-allocate final array with space for x0 column
       if (!Array.isArray(newArray[i])) {
-        newArray[i] = new Array(numFeatures + 1);
+        newArray[i] = new Array(numFeatures + 1); // with space for x0 column
         newArray[i][0] = 1; // x0 column
       }
     }
     mean = tmpSum.getSum() / m;
 
     // calculate std
-    for (i=1; i<=m; ++i) {
+    for (i=0; i<m; ++i) {
       // subtract each column value from the mean
-      newArray[i][j] = X.data[i-1][j] - mean;
+      newArray[i][jNormalized] = X.data[i][j] - mean;
       // and calculate std at the same time
-      tmpSum.data[0][i] = newArray[i][j] * newArray[i][j];
+      tmpSum.data[0][i] = newArray[i][jNormalized] * newArray[i][jNormalized];
     }
-    std = Math.sqrt(tmpSum.getSum() / m);
-    std += _SMALLEST_DELTA; // to prevent divide by zero below
+    std = Math.sqrt(tmpSum.getSum() / (m-1));   // m-1 for unbiased estimation (Bessel's correction)
+    if (0 === std) { 
+      std = _SMALLEST_DELTA; // to prevent divide by zero below
+    }
 
     // divide column by std
-    for (i=1; i<=m; ++i) {
+    for (i=0; i<m; ++i) {
       // subtract each column value from the mean
-      newArray[i][j] /= std;
+      newArray[i][jNormalized] /= std;
     }
   }
 
   return new ML.Matrix(newArray);
 };
+
 
 
 /**
@@ -98,13 +108,13 @@ ML.normalizeFeatures = function(X) {
  * Once complete this returns the final `theta`, `cost`, the final learning 
  * rate (`alpha`) as well as the number of iterations elpased (`iter`).
  *
- * @param {Matrix} X Training feature data (without x0 column)
- * @param {Vector} y Training result data
+ * @param {Matrix} X Training feature data size m x n (without x0 column)
+ * @param {Vector} y Training result data, size m x 1
  * @param {Function} costFn Function to compute cost.
  * @param {Number} alpha Initial learning rate.
  * @param {Integer} maxIters Max. no. of iterations to perform.
  * 
- * @return {Object} {theta: Vector, cost: float, alpha: float, iters: int}
+ * @return {Object} {theta: Matrix(n+1 x 1), cost: float, alpha: float, iters: int}
  */
 ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
   /*
@@ -129,9 +139,9 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
 
   var oldCost, i, j, row, tmpSum = new ML.Vector.zero(m);
 
-  // initial theta and theta delta
-  var theta = ML.Vector.zero(n),
-      delta = ML.Vector.zero(n);
+  // initial theta and theta delta as column vectors
+  var theta = ML.Vector.zero(n).trans_(),
+      delta = ML.Vector.zero(n).trans_();
 
   // initial cost
   var cost = costFn(X, theta, y);
@@ -149,7 +159,7 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
         tmpSum[i] = (X.dot(i, theta) - y[i]) * X.data[i][j];
       }
 
-      delta.data[j] = alpha * tmpSum.getSum() / m;
+      delta.data[j][0] = alpha * tmpSum.getSum() / m;
     }
 
     // update theta
@@ -184,7 +194,7 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
  * 
  * @constructor
  */
-ML.LinearReg = function(numFeatures) {
+ML.LinReg = function(numFeatures) {
   this._dataX = [];
   this._dataY = [];
   this._nF = numFeatures;   // need extra space to hold x0
@@ -205,12 +215,16 @@ ML.LinearReg = function(numFeatures) {
  * @param  {Array} newTrainingData One or more rows (Array) of training data.
  * @return this
  */
-ML.LinearReg.prototype.addData = function(data) {
+ML.LinReg.prototype.addData = function(data) {
   var rows = data.length;
 
-  for (var i=0; i<data.length; ++i) {
-    this._dataX.push(data[i].slice(0, rows-1));
-    this._dataY.push(data[i][rows-1]);
+  for (var i=0; i<rows; ++i) {
+    if (data[i].length < this._nF) {
+      _throwError('LinReg', 'addData', 'Not enough data');
+    }
+
+    this._dataX.push(data[i].slice(0, this._nF-1));
+    this._dataY.push(data[i][this._nF-1]);
   }
 };
 
@@ -225,11 +239,11 @@ ML.LinearReg.prototype.addData = function(data) {
  * 
  * @return {Object} {theta: Vector, cost: float, alpha: float, iters: int}
  */
-ML.LinearReg.prototype.solve = function(alpha, maxIters) {
+ML.LinReg.prototype.solve = function(alpha, maxIters) {
   var X = new ML.Matrix(this._dataX),
     y = new ML.Matrix(this._dataY).trans_();
 
-  return ML.gradientDescent(X, y, ML.LinearReg.costFunction);
+  return ML.gradientDescent(X, y, ML.LinReg.costFunction);
 };
 
 
@@ -239,19 +253,22 @@ ML.LinearReg.prototype.solve = function(alpha, maxIters) {
 
 /**
  * The cost function.
- * @return {Number}
+ *
+ * @param {Matrix} X Size m x n
+ * @param {Matrix} theta Size n x 1
+ * @param {Matrix} y Size m x 1
+ * 
+ * @return {Number} Cost using theta
  */
-ML.LinearReg.costFunction = function(X, theta, y) {
+ML.LinReg.costFunction = function(X, theta, y) {
   /*
-    m = y.size
-   
-    Cost = 1/2m * trans(XT*theta - y) * (XT*theta - y), where XT=trans(X)
+    Cost = (X*theta - y)^2 * (m / 2)
   */
-  var m = y.cols;
+  var m = y.rows;
 
-  var X_mul_theta_minus_y = X.dot(theta).minus_(y);
+  var tmp = X.dot(theta).minus_(y);
 
-  return (X_mul_theta_minus_y.trans().dot_(X_mul_theta_minus_y)).data[0][0] / (2 * m);
+  return (tmp.mul(tmp)).getSum() / (2 * m);
 };
 
 

@@ -4,13 +4,13 @@
  * Once complete this returns the final `theta`, `cost`, the final learning 
  * rate (`alpha`) as well as the number of iterations elpased (`iter`).
  *
- * @param {Matrix} X Training feature data (without x0 column)
- * @param {Vector} y Training result data
+ * @param {Matrix} X Training feature data size m x n (without x0 column)
+ * @param {Vector} y Training result data, size m x 1
  * @param {Function} costFn Function to compute cost.
  * @param {Number} alpha Initial learning rate.
  * @param {Integer} maxIters Max. no. of iterations to perform.
  * 
- * @return {Object} {theta: Vector, cost: float, alpha: float, iters: int}
+ * @return {Object} {theta: Matrix(n+1 x 1), cost: float, alpha: float, iters: int}
  */
 ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
   /*
@@ -35,9 +35,9 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
 
   var oldCost, i, j, row, tmpSum = new ML.Vector.zero(m);
 
-  // initial theta and theta delta
-  var theta = ML.Vector.zero(n),
-      delta = ML.Vector.zero(n);
+  // initial theta and theta delta as column vectors
+  var theta = ML.Vector.zero(n).trans_(),
+      delta = ML.Vector.zero(n).trans_();
 
   // initial cost
   var cost = costFn(X, theta, y);
@@ -55,7 +55,7 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
         tmpSum[i] = (X.dot(i, theta) - y[i]) * X.data[i][j];
       }
 
-      delta.data[j] = alpha * tmpSum.getSum() / m;
+      delta.data[j][0] = alpha * tmpSum.getSum() / m;
     }
 
     // update theta

@@ -5,7 +5,7 @@
  * 
  * @constructor
  */
-ML.LinearReg = function(numFeatures) {
+ML.LinReg = function(numFeatures) {
   this._dataX = [];
   this._dataY = [];
   this._nF = numFeatures;   // need extra space to hold x0
@@ -26,12 +26,16 @@ ML.LinearReg = function(numFeatures) {
  * @param  {Array} newTrainingData One or more rows (Array) of training data.
  * @return this
  */
-ML.LinearReg.prototype.addData = function(data) {
+ML.LinReg.prototype.addData = function(data) {
   var rows = data.length;
 
-  for (var i=0; i<data.length; ++i) {
-    this._dataX.push(data[i].slice(0, rows-1));
-    this._dataY.push(data[i][rows-1]);
+  for (var i=0; i<rows; ++i) {
+    if (data[i].length < this._nF) {
+      _throwError('LinReg', 'addData', 'Not enough data');
+    }
+
+    this._dataX.push(data[i].slice(0, this._nF-1));
+    this._dataY.push(data[i][this._nF-1]);
   }
 };
 
@@ -46,11 +50,11 @@ ML.LinearReg.prototype.addData = function(data) {
  * 
  * @return {Object} {theta: Vector, cost: float, alpha: float, iters: int}
  */
-ML.LinearReg.prototype.solve = function(alpha, maxIters) {
+ML.LinReg.prototype.solve = function(alpha, maxIters) {
   var X = new ML.Matrix(this._dataX),
     y = new ML.Matrix(this._dataY).trans_();
 
-  return ML.gradientDescent(X, y, ML.LinearReg.costFunction);
+  return ML.gradientDescent(X, y, ML.LinReg.costFunction);
 };
 
 
@@ -60,19 +64,22 @@ ML.LinearReg.prototype.solve = function(alpha, maxIters) {
 
 /**
  * The cost function.
- * @return {Number}
+ *
+ * @param {Matrix} X Size m x n
+ * @param {Matrix} theta Size n x 1
+ * @param {Matrix} y Size m x 1
+ * 
+ * @return {Number} Cost using theta
  */
-ML.LinearReg.costFunction = function(X, theta, y) {
+ML.LinReg.costFunction = function(X, theta, y) {
   /*
-    m = y.size
-   
-    Cost = 1/2m * trans(XT*theta - y) * (XT*theta - y), where XT=trans(X)
+    Cost = (X*theta - y)^2 * (m / 2)
   */
-  var m = y.cols;
+  var m = y.rows;
 
-  var X_mul_theta_minus_y = X.dot(theta).minus_(y);
+  var tmp = X.dot(theta).minus_(y);
 
-  return (X_mul_theta_minus_y.trans().dot_(X_mul_theta_minus_y)).data[0][0] / (2 * m);
+  return (tmp.mul(tmp)).getSum() / (2 * m);
 };
 
 
