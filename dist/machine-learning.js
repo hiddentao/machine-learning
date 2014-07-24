@@ -137,7 +137,7 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
   var m = X.rows,
     n = X.cols;
 
-  var oldCost, i, j, row, tmpSum = new ML.Vector.zero(m);
+  var oldCost, i, j, row, h_x, tmpSum = new ML.Vector.zero(m);
 
   // initial theta and theta delta as column vectors
   var theta = ML.Vector.zero(n).trans_(),
@@ -147,18 +147,24 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
   var cost = costFn(X, theta, y);
 
   // loop
-  var iters = maxIters;
-  while (0 < cost && 0 < iters--) {
+  var iters = 0;
+  while (0 < cost && maxIters > iters) {
+    iters++;
+
     // save current cost
     oldCost = cost;
 
+    // calculate h(x) - y
+    h_x = X.dot(theta).minus_(y);
+
     // for each theta value
     for (j=0; j<n; ++j) {
-      // to calculate derivate we go through each row in training set
+      // calculate sum = (h(x(i)) − y(i))*x(i,j)
       for (i=0; i<m; ++i) {
-        tmpSum[i] = (X.dot(i, theta) - y[i]) * X.data[i][j];
+        tmpSum[i] = h_x.data[i][j] * X.data[i][j];
       }
-
+      
+      // delta = alpha * (sum / m)
       delta.data[j][0] = alpha * tmpSum.getSum() / m;
     }
 

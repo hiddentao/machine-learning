@@ -1,10 +1,10 @@
 "use strict";
 
-var sinon = require('sinon'),
-  chai = require('chai'),
-  expect = chai.expect,
-  should = chai.should();
-chai.use(require('sinon-chai'));
+var base = require('./_base'),
+  sinon = base.sinon,
+  assert = base.assert,
+  expect = base.expect,
+  should = base.should;
 
 
 var ml;
