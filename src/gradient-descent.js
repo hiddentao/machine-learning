@@ -26,29 +26,28 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
     4. Exit and return theta, cost, alpha, iters
   */
   
-  // the features array
+  // the features array 
   X = ML.normalizeFeatures(X);
 
   // measurements
+  // (remember, at this point X has the x0 column prepended)
   var m = X.rows,
     n = X.cols;
 
-  var oldCost, i, j, row, h_x, tmpSum = new ML.Vector.zero(m);
+  var i, j, row, h_x, tmpSum = new ML.Vector.zero(m).trans_();
 
   // initial theta and theta delta as column vectors
   var theta = ML.Vector.zero(n).trans_(),
       delta = ML.Vector.zero(n).trans_();
 
   // initial cost
-  var cost = costFn(X, theta, y);
+  var cost = costFn(X, theta, y),
+    oldCost = cost;
 
   // loop
   var iters = 0;
   while (0 < cost && maxIters > iters) {
     iters++;
-
-    // save current cost
-    oldCost = cost;
 
     // calculate h(x) - y
     h_x = X.dot(theta).minus_(y);
@@ -57,9 +56,9 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
     for (j=0; j<n; ++j) {
       // calculate sum = (h(x(i)) − y(i))*x(i,j)
       for (i=0; i<m; ++i) {
-        tmpSum[i] = h_x.data[i][j] * X.data[i][j];
+        tmpSum.data[i][0] = h_x.data[i][0] * X.data[i][j];
       }
-      
+
       // delta = alpha * (sum / m)
       delta.data[j][0] = alpha * tmpSum.getSum() / m;
     }
@@ -76,6 +75,9 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
       theta.plus_(delta);
       // reduce alpha
       alpha /= 2;
+    } else {
+      // save current cost
+      oldCost = cost;
     }
   }
 
@@ -83,7 +85,7 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
     theta: theta,
     cost: cost,
     alpha: alpha,
-    iters: maxIters - iters
+    iters: iters
   };
 };
 

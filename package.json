@@ -43,7 +43,8 @@
     "run-sequence": "~0.3.6",
     "chai": "~1.9.1",
     "sinon": "~1.10.2",
-    "sinon-chai": "~2.5.0"
+    "sinon-chai": "~2.5.0",
+    "lodash": "~2.4.1"
   },
   "dependencies": {
     "linear-algebra": "~3.1.0"
