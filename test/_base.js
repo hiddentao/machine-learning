@@ -36,3 +36,10 @@ exports.loadLinRegData = function(filename) {
     y: results
   };
 };
+
+
+exports.round = function(arr) {
+  return arr.map(function(v) {
+    return parseFloat(v.toFixed(4));
+  });
+};

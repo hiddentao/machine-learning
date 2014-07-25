@@ -50,7 +50,7 @@
  *
  * @param {Matrix} X training features dataset.
  * 
- * @return {Matrix} Normalized version of training set with x0 column added.
+ * @return {Object} { X: Normalized version of training set with x0 column added., mean: Matrix of column means, std: Matrix of column std }
  */
 ML.normalizeFeatures = function(X) {
   var numFeatures = X.cols,
@@ -61,7 +61,9 @@ ML.normalizeFeatures = function(X) {
 
   var newArray = new Array(m);
   
-  var mean, std, i, j, jNormalized, tmpSum = new ML.Vector.zero(m);
+  var mean = new Array(numFeatures), std = new Array(numFeatures);
+
+  var i, j, jNormalized, tmpSum = new ML.Vector.zero(m);
 
   for (j=0; j<numFeatures; ++j) {
     jNormalized = j + 1;  // because we'll be prepending an x0 column later on
@@ -76,28 +78,32 @@ ML.normalizeFeatures = function(X) {
         newArray[i][0] = 1; // x0 column
       }
     }
-    mean = tmpSum.getSum() / m;
+    mean[j] = tmpSum.getSum() / m;
 
     // calculate std
     for (i=0; i<m; ++i) {
       // subtract each column value from the mean
-      newArray[i][jNormalized] = X.data[i][j] - mean;
+      newArray[i][jNormalized] = X.data[i][j] - mean[j];
       // and calculate std at the same time
       tmpSum.data[0][i] = newArray[i][jNormalized] * newArray[i][jNormalized];
     }
-    std = Math.sqrt(tmpSum.getSum() / (m-1));   // m-1 for unbiased estimation (Bessel's correction)
-    if (0 === std) { 
-      std = _SMALLEST_DELTA; // to prevent divide by zero below
+    std[j] = Math.sqrt(tmpSum.getSum() / (m-1));   // m-1 for unbiased estimation (Bessel's correction)
+    if (0 === std[j]) { 
+      std[j] = _SMALLEST_DELTA; // to prevent divide by zero below
     }
 
     // divide column by std
     for (i=0; i<m; ++i) {
       // subtract each column value from the mean
-      newArray[i][jNormalized] /= std;
+      newArray[i][jNormalized] /= std[j];
     }
   }
 
-  return new ML.Matrix(newArray);
+  return {
+    X: new ML.Matrix(newArray),
+    mean: new ML.Matrix(mean),
+    std: new ML.Matrix(std),
+  };
 };
 
 
@@ -105,6 +111,9 @@ ML.normalizeFeatures = function(X) {
 /**
  * Perform gradient descent to compute the value of theta.
  *
+ * This first calls `normalizeFeatures()` to normalize the dataset, so that 
+ * gradient descent can converge quicker.
+ * 
  * Once complete this returns the final `theta`, `cost`, the final learning 
  * rate (`alpha`) as well as the number of iterations elpased (`iter`).
  *
@@ -114,7 +123,7 @@ ML.normalizeFeatures = function(X) {
  * @param {Number} alpha Initial learning rate.
  * @param {Integer} maxIters Max. no. of iterations to perform.
  * 
- * @return {Object} {theta: Matrix(n+1 x 1), cost: float, alpha: float, iters: int}
+ * @return {Object} {theta: Matrix(n+1 x 1), cost: float, alpha: float, iters: int, mean: Matrix(1xn), std: Matrix(1xn) }
  */
 ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
   /*
@@ -131,7 +140,8 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
   */
   
   // the features array 
-  X = ML.normalizeFeatures(X);
+  var _norm = ML.normalizeFeatures(X);
+  X = _norm.X;
 
   // measurements
   // (remember, at this point X has the x0 column prepended)
@@ -189,7 +199,9 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
     theta: theta,
     cost: cost,
     alpha: alpha,
-    iters: iters
+    iters: iters,
+    mean: _norm.mean,
+    std: _norm.std,
   };
 };
 
@@ -205,7 +217,7 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
 ML.LinReg = function(numFeatures) {
   this._dataX = [];
   this._dataY = [];
-  this._nF = numFeatures;   // need extra space to hold x0
+  this._nF = numFeatures;
 };
 
 
@@ -227,12 +239,12 @@ ML.LinReg.prototype.addData = function(data) {
   var rows = data.length;
 
   for (var i=0; i<rows; ++i) {
-    if (data[i].length < this._nF) {
+    if (data[i].length <= this._nF) {
       _throwError('LinReg', 'addData', 'Not enough data');
     }
 
-    this._dataX.push(data[i].slice(0, this._nF-1));
-    this._dataY.push(data[i][this._nF-1]);
+    this._dataX.push(data[i].slice(0, this._nF));
+    this._dataY.push(data[i][this._nF]);
   }
 };
 
@@ -244,14 +256,39 @@ ML.LinReg.prototype.addData = function(data) {
  *
  * @param {Number} alpha Initial learning rate.
  * @param {Integer} maxIters Max. no. of iterations to perform.
- * 
- * @return {Object} {theta: Vector, cost: float, alpha: float, iters: int}
+ *
+ * @return See gradientDescent()
  */
 ML.LinReg.prototype.solve = function(alpha, maxIters) {
   var X = new ML.Matrix(this._dataX),
     y = new ML.Matrix(this._dataY).trans_();
 
-  return ML.gradientDescent(X, y, ML.LinReg.costFunction);
+  return (this._results = ML.gradientDescent(X, y, ML.LinReg.costFunction));
+};
+
+
+
+
+/**
+ * Calculate output for given input.
+ *
+ * The regression needs to have been solved prior to calling this.
+ * 
+ * @param {Array} input Containing n items, n = no. of of features
+ *
+ * @return Number The calculated `y` value
+ */
+ML.LinReg.prototype.calculate = function(input) {
+  if (!this._results) {
+    _throwError('LinReg', 'calculate', 'Need to solve first');
+  }
+
+  var normalized = 
+    new ML.Matrix(input)
+      .minus_(this._results.mean)
+      .div_(this._results.std);
+
+  return normalized.dot_(this._results.theta).data[0][0];
 };
 
 

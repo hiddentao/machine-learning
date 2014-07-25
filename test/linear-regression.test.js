@@ -32,7 +32,7 @@ var test = module.exports = {
 
         expect(function() {
           l.addData([
-            [23, 45, 12, 98],
+            [23, 45, 12, 98, 19],
           ]);          
         }).to.throw('machine-learning: [LinReg_addData] Not enough data');
 
@@ -42,21 +42,21 @@ var test = module.exports = {
 
         // the extra values in this array should get ignored
         l.addData([
-          [23, 45, 12, 98, 34, 18],
-          [87, 48, 9, 1, 45, 23]
+          [23, 45, 12, 98, 34, 18, 81],
+          [87, 48, 9, 1, 45, 23, 72]
         ]);
 
         l.addData([
-          [8, 7, 6, 5, 3],
+          [8, 7, 6, 5, 3, 9],
         ]);
 
         l._dataX.should.eql([
-          [23, 45, 12, 98],
-          [87, 48, 9, 1],
-          [8, 7, 6, 5]
+          [23, 45, 12, 98, 34],
+          [87, 48, 9, 1, 45],
+          [8, 7, 6, 5, 3]
         ]);
 
-        l._dataY.should.eql([ 34, 45, 3 ]);
+        l._dataY.should.eql([ 18, 23, 9 ]);
       }
     },
     'solve': function() {
@@ -65,26 +65,52 @@ var test = module.exports = {
       var l = new ml.LinReg(5);
 
       l.addData([
-        [23, 45, 12, 98, 34],
-        [87, 48, 9, 1, 45]
+        [23, 45, 12, 98, 34, 12],
+        [87, 48, 9, 1, 45, 9]
       ]);
 
       l.solve().should.eql(234234);
+
+      l._results.should.eql(234234);
 
       spy.should.have.been.calledOnce;
       var args = spy.getCall(0).args;
 
       args[0].should.be.instanceOf(ml.Matrix);
       args[0].data.should.eql([
-        [23, 45, 12, 98],
-        [87, 48, 9, 1]
+        [23, 45, 12, 98, 34],
+        [87, 48, 9, 1, 45]
       ]);
 
       args[1].should.be.instanceOf(ml.Matrix);
-      args[1].data[0][0].should.eql(34);
-      args[1].data[0][1].should.eql(45);
+      args[1].data[0][0].should.eql(12);
+      args[1].data[0][1].should.eql(9);
 
       args[2].should.eql(ml.LinReg.costFunction);
+    },
+    'calculate': {
+      'need results first': function() {
+        var l = new ml.LinReg(5);
+
+        expect(function() {
+          l.calculate();
+        }).to.throw('machine-learning: [LinReg_calculate] Need to solve first');
+      },
+      'calculates result': function() {
+        var l = new ml.LinReg(3);
+
+        l._results = {
+          theta: new ml.Matrix([ [0.5], [1.5], [2.5] ]),
+          mean: new ml.Matrix([ [5, 10, 15] ]),
+          std: new ml.Matrix([ [2, 1, 3] ]),
+        };
+
+        var v = l.calculate([8, 7, 24]);
+
+        var exp = new ml.Matrix([1.5, -3, 3]).dot(l._results.theta).data[0][0];
+
+        v.should.eql(exp);
+      }
     },
     'cost function': function() {
       var X = new ml.Matrix([

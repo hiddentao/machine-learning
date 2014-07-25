@@ -3,7 +3,7 @@
  *
  * @param {Matrix} X training features dataset.
  * 
- * @return {Matrix} Normalized version of training set with x0 column added.
+ * @return {Object} { X: Normalized version of training set with x0 column added., mean: Matrix of column means, std: Matrix of column std }
  */
 ML.normalizeFeatures = function(X) {
   var numFeatures = X.cols,
@@ -14,7 +14,9 @@ ML.normalizeFeatures = function(X) {
 
   var newArray = new Array(m);
   
-  var mean, std, i, j, jNormalized, tmpSum = new ML.Vector.zero(m);
+  var mean = new Array(numFeatures), std = new Array(numFeatures);
+
+  var i, j, jNormalized, tmpSum = new ML.Vector.zero(m);
 
   for (j=0; j<numFeatures; ++j) {
     jNormalized = j + 1;  // because we'll be prepending an x0 column later on
@@ -29,28 +31,32 @@ ML.normalizeFeatures = function(X) {
         newArray[i][0] = 1; // x0 column
       }
     }
-    mean = tmpSum.getSum() / m;
+    mean[j] = tmpSum.getSum() / m;
 
     // calculate std
     for (i=0; i<m; ++i) {
       // subtract each column value from the mean
-      newArray[i][jNormalized] = X.data[i][j] - mean;
+      newArray[i][jNormalized] = X.data[i][j] - mean[j];
       // and calculate std at the same time
       tmpSum.data[0][i] = newArray[i][jNormalized] * newArray[i][jNormalized];
     }
-    std = Math.sqrt(tmpSum.getSum() / (m-1));   // m-1 for unbiased estimation (Bessel's correction)
-    if (0 === std) { 
-      std = _SMALLEST_DELTA; // to prevent divide by zero below
+    std[j] = Math.sqrt(tmpSum.getSum() / (m-1));   // m-1 for unbiased estimation (Bessel's correction)
+    if (0 === std[j]) { 
+      std[j] = _SMALLEST_DELTA; // to prevent divide by zero below
     }
 
     // divide column by std
     for (i=0; i<m; ++i) {
       // subtract each column value from the mean
-      newArray[i][jNormalized] /= std;
+      newArray[i][jNormalized] /= std[j];
     }
   }
 
-  return new ML.Matrix(newArray);
+  return {
+    X: new ML.Matrix(newArray),
+    mean: new ML.Matrix(mean),
+    std: new ML.Matrix(std),
+  };
 };
 
 

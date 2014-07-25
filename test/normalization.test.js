@@ -15,10 +15,18 @@ var test = module.exports = {
     ml = require('../index')();
   },
   'normalize features': {
+    'returns mean and std': function() {
+      var m = new ml.Matrix([ [1, 2, 3], [1, 5, 9], [1, -10, 81] ]);
+
+      var ret = ml.normalizeFeatures(m);
+
+      ret.mean.data.should.eql([ [1, -1, 31] ]);
+      base.round(ret.std.data[0]).should.eql([0, 7.9373, 43.4051]);
+    },
     'returns new matrix': function() {
       var m = ml.Matrix.identity(3);
 
-      var m2 = ml.normalizeFeatures(m);
+      var m2 = ml.normalizeFeatures(m).X;
 
       m2.should.not.eql(m);
     },
@@ -26,7 +34,7 @@ var test = module.exports = {
       var a = [ [1], [41], [7] ];
       var m = new ml.Matrix(a);
 
-      var m2 = ml.normalizeFeatures(m);
+      var m2 = ml.normalizeFeatures(m).X;
 
       m2.data[0][0].should.eql(1);
       m2.data[1][0].should.eql(1);
@@ -36,7 +44,7 @@ var test = module.exports = {
       var a = [ [1, -2, 3], [41, 5, 6], [7, 80, 9] ];
       var m = new ml.Matrix(a);
 
-      var m2 = ml.normalizeFeatures(m);
+      var m2 = ml.normalizeFeatures(m).X;
 
       m2.data.should.eql([ 
         [ 1, -0.7108115812977249, -0.652632295604179, -1 ],
@@ -48,7 +56,7 @@ var test = module.exports = {
       var a = [ [5], [5], [5] ];
       var m = new ml.Matrix(a);
 
-      var m2 = ml.normalizeFeatures(m);
+      var m2 = ml.normalizeFeatures(m).X;
 
       m2.data.should.eql([ [1, 0], [1, 0], [1, 0] ]);
     }

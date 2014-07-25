@@ -26,6 +26,17 @@ var test = module.exports = {
         y = new ml.Matrix([ [0.9], [1.1], [2.2], [0.8] ]);
       },
 
+      'returns mean and std': function() {
+        var costFn = mocker.spy(function(X, theta, y) {
+          return 234.2344;
+        });
+
+        var ret = ml.gradientDescent(X, y, costFn, 0.1, 0);
+
+        ret.mean.data.should.eql([ [ 37.25, 14 ] ]);
+        base.round(ret.std.data[0]).should.eql([ 14.1745, 6.0553 ]);
+      },
+
       '0 iterations - initial cost': function() {
         var costFn = mocker.spy(function(X, theta, y) {
           return 234.2344;
@@ -36,7 +47,7 @@ var test = module.exports = {
         ret.cost.should.eql( 234.2344 );
         costFn.should.have.been.calledOnce;
         var costArgs = costFn.getCall(0).args;
-        costArgs[0].data.should.eql( ml.normalizeFeatures(X).data );
+        costArgs[0].data.should.eql( ml.normalizeFeatures(X).X.data );
         costArgs[1].should.eql(ret.theta);
         costArgs[2].should.eql(y);
 
@@ -92,28 +103,26 @@ var test = module.exports = {
     'real data': {
       'linear regression': {
         'm=97, n=1': function() {
-          var data1f = base.loadLinRegData('linreg-1f.txt'),
-            X = new ml.Matrix(data1f.X),
-            y = new ml.Matrix(data1f.y);
+          var data = base.loadLinRegData('linreg-1f.txt'),
+            X = new ml.Matrix(data.X),
+            y = new ml.Matrix(data.y);
 
           var ret = ml.gradientDescent(X, y, ml.LinReg.costFunction, 0.01, 1500);
 
-          // ret.cost.toFixed(5).should.eql("4.47697");
-          // console.log(ret.cost);
-          console.log(ret.theta);
+          var theta = base.round(_.flatten(ret.theta.toArray()));
+
+          theta.should.eql([ 5.8391, 4.6169 ]);
         },
         'm=97, n=2': function() {
-          var data1f = base.loadLinRegData('linreg-2f.txt'),
-            X = new ml.Matrix(data1f.X),
-            y = new ml.Matrix(data1f.y);
+          var data = base.loadLinRegData('linreg-2f.txt'),
+            X = new ml.Matrix(data.X),
+            y = new ml.Matrix(data.y);
 
           var ret = ml.gradientDescent(X, y, ml.LinReg.costFunction, 0.1, 400);
 
-          var theta = _.flatten(ret.theta.toArray()).map(function (f) {
-            return f.toFixed(6);
-          });
+          var theta = base.round(_.flatten(ret.theta.toArray()));
 
-          theta.should.eql([ '340412.659574', '110631.046741', '-6649.470733' ]);
+          theta.should.eql([ 340412.6596, 110631.0467, -6649.4707 ]);
         }
       }
     }

@@ -1,6 +1,9 @@
 /**
  * Perform gradient descent to compute the value of theta.
  *
+ * This first calls `normalizeFeatures()` to normalize the dataset, so that 
+ * gradient descent can converge quicker.
+ * 
  * Once complete this returns the final `theta`, `cost`, the final learning 
  * rate (`alpha`) as well as the number of iterations elpased (`iter`).
  *
@@ -10,7 +13,7 @@
  * @param {Number} alpha Initial learning rate.
  * @param {Integer} maxIters Max. no. of iterations to perform.
  * 
- * @return {Object} {theta: Matrix(n+1 x 1), cost: float, alpha: float, iters: int}
+ * @return {Object} {theta: Matrix(n+1 x 1), cost: float, alpha: float, iters: int, mean: Matrix(1xn), std: Matrix(1xn) }
  */
 ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
   /*
@@ -27,7 +30,8 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
   */
   
   // the features array 
-  X = ML.normalizeFeatures(X);
+  var _norm = ML.normalizeFeatures(X);
+  X = _norm.X;
 
   // measurements
   // (remember, at this point X has the x0 column prepended)
@@ -85,7 +89,9 @@ ML.gradientDescent = function(X, y, costFn, alpha, maxIters) {
     theta: theta,
     cost: cost,
     alpha: alpha,
-    iters: iters
+    iters: iters,
+    mean: _norm.mean,
+    std: _norm.std,
   };
 };
 

@@ -8,7 +8,7 @@
 ML.LinReg = function(numFeatures) {
   this._dataX = [];
   this._dataY = [];
-  this._nF = numFeatures;   // need extra space to hold x0
+  this._nF = numFeatures;
 };
 
 
@@ -30,12 +30,12 @@ ML.LinReg.prototype.addData = function(data) {
   var rows = data.length;
 
   for (var i=0; i<rows; ++i) {
-    if (data[i].length < this._nF) {
+    if (data[i].length <= this._nF) {
       _throwError('LinReg', 'addData', 'Not enough data');
     }
 
-    this._dataX.push(data[i].slice(0, this._nF-1));
-    this._dataY.push(data[i][this._nF-1]);
+    this._dataX.push(data[i].slice(0, this._nF));
+    this._dataY.push(data[i][this._nF]);
   }
 };
 
@@ -47,14 +47,39 @@ ML.LinReg.prototype.addData = function(data) {
  *
  * @param {Number} alpha Initial learning rate.
  * @param {Integer} maxIters Max. no. of iterations to perform.
- * 
- * @return {Object} {theta: Vector, cost: float, alpha: float, iters: int}
+ *
+ * @return See gradientDescent()
  */
 ML.LinReg.prototype.solve = function(alpha, maxIters) {
   var X = new ML.Matrix(this._dataX),
     y = new ML.Matrix(this._dataY).trans_();
 
-  return ML.gradientDescent(X, y, ML.LinReg.costFunction);
+  return (this._results = ML.gradientDescent(X, y, ML.LinReg.costFunction));
+};
+
+
+
+
+/**
+ * Calculate output for given input.
+ *
+ * The regression needs to have been solved prior to calling this.
+ * 
+ * @param {Array} input Containing n items, n = no. of of features
+ *
+ * @return Number The calculated `y` value
+ */
+ML.LinReg.prototype.calculate = function(input) {
+  if (!this._results) {
+    _throwError('LinReg', 'calculate', 'Need to solve first');
+  }
+
+  var normalized = 
+    new ML.Matrix(input)
+      .minus_(this._results.mean)
+      .div_(this._results.std);
+
+  return normalized.dot_(this._results.theta).data[0][0];
 };
 
 
