@@ -1,0 +1,93 @@
+@import 'nib'
+@import 'jsxgraph'
+@import 'devicons'
+@import 'prism'
+@import 'settings'
+@import 'core'
+
+
+content-width = 900px
+
+
+header
+  margin 0 auto
+  width content-width
+
+  h1
+    display block
+    text-align center
+    margin-bottom 0
+    .suffix
+      color darken(body-fg-color, 50%)
+
+  ul.external-links
+    list-style none
+    display block
+    text-align center
+    margin 1em 0
+    padding 0
+    li
+      display inline-block
+      margin 0 0.2em
+      pdding 0
+      font-size 3em
+
+
+footer
+  text-align: center
+  font-size: 80%
+  color: darken(body-fg-color, 60%)
+  margin-top: 2em
+
+
+main
+  font-family Helvetica, Verdana, Arial, sans-serif
+  font-size 120%
+  line-height 1.5em
+  width content-width
+  box-sizing border-box
+  margin 0 auto
+  background-color content-bg-color
+  color content-fg-color
+  border-radius 5px
+  padding 1em
+
+  h2
+    margin-top 0
+
+  section
+    padding 1.5em 0 0.5em
+    border-top 1px dashed lighten(content-fg-color, 80%)
+
+    &:first-child
+      padding-top 0
+      border-top none
+
+    .visual
+      width 50%
+      display inline-block
+      box-sizing border-box
+      overflow hidden
+      position relative
+      height 400px
+
+    .controls
+      width 49%
+      display inline-block
+      box-sizing border-box
+      padding 0 0 0 1.5em
+      vertical-align top
+
+      p:first-child
+        margin-top 0
+
+
+/** Smaller screens */
+
+@media screen and (max-width: content-width)
+  header, main
+    width 100%
+
+  main
+    border-radius 0
+
