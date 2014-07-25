@@ -54,7 +54,7 @@ ML.LinReg.prototype.solve = function(alpha, maxIters) {
   var X = new ML.Matrix(this._dataX),
     y = new ML.Matrix(this._dataY).trans_();
 
-  return (this._results = ML.gradientDescent(X, y, ML.LinReg.costFunction));
+  return (this._results = ML.gradientDescent(X, y, ML.LinReg.costFunction, alpha, maxIters));
 };
 
 

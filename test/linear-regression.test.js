@@ -69,7 +69,7 @@ var test = module.exports = {
         [87, 48, 9, 1, 45, 9]
       ]);
 
-      l.solve().should.eql(234234);
+      l.solve(0.0012, 454).should.eql(234234);
 
       l._results.should.eql(234234);
 
@@ -87,6 +87,9 @@ var test = module.exports = {
       args[1].data[0][1].should.eql(9);
 
       args[2].should.eql(ml.LinReg.costFunction);
+
+      args[3].should.eql(0.0012);
+      args[4].should.eql(454);
     },
     'calculate': {
       'need results first': function() {
