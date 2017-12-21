@@ -1,6 +1,6 @@
 # machine-learning
 
-**THIS LIBRARY IS NOT YET RELEASED. STILL IN DEVELOPMENT...**
+**THIS IS NO LONGER UNDER DEVELOPMENT - use [deeplearn.js](https://deeplearnjs.org/) instead**
 
 [![Build Status](https://secure.travis-ci.org/hiddentao/machine-learning.png?branch=master)](http://travis-ci.org/hiddentao/machine-learning)
 
